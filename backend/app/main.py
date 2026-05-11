@@ -1,18 +1,33 @@
 from fastapi import FastAPI
-# Using absolute imports relative to the backend root
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import auth, contacts, location, alerts
 from app.models.database import init_db
-from app.api import auth, contacts 
 
-app = FastAPI(title="WaitSafe API")
+app = FastAPI(title="WaitSafe API - Personal Safety Engine")
 
-@app.on_event("startup")
-def on_startup():
-    init_db()
-    print("WaitSafe Database Initialized!")
+# Initialize database tables
+init_db()
 
+# --- CORS Configuration ---
+# This is essential for when we connect your React/Frontend later
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allows all origins for development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Route Registration ---
 app.include_router(auth.router)
 app.include_router(contacts.router)
+app.include_router(location.router)
+app.include_router(alerts.router)
 
 @app.get("/")
 def read_root():
-    return {"status": "WaitSafe Backend is running"}
+    return {
+        "status": "online",
+        "project": "WaitSafe",
+        "message": "Backend Security Engine is active and monitoring."
+    }
