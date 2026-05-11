@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
+import math
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.models.database import SessionLocal, UserLocation, User
-from app.models.schemas import LocationCreate, LocationResponse
-from app.api.contacts import get_current_user 
+from app.models.database import SessionLocal, UserLocation, SafeZone
+from app.models.schemas import LocationCreate, LocationResponse, SafeZoneCreate, SafeZoneResponse
+from app.api.auth import get_current_user  # This should work now!
 
-router = APIRouter(prefix="/location", tags=["Location Tracking"])
+router = APIRouter(prefix="/location", tags=["Location & Geofencing"])
 
 def get_db():
     db = SessionLocal()
@@ -14,39 +15,47 @@ def get_db():
     finally:
         db.close()
 
-# 1. UPDATE LOCATION (The "Ping")
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 6371000  # Earth radius in meters
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c
+
 @router.post("/", response_model=LocationResponse)
 def update_location(
     location: LocationCreate, 
     db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    """
-    This endpoint acts as the receiver for the 'Live' heartbeat.
-    The mobile app will call this every X seconds/minutes.
-    """
-    new_location = UserLocation(
+    new_loc = UserLocation(
         latitude=location.latitude,
         longitude=location.longitude,
         user_id=current_user.id
     )
-    db.add(new_location)
+    db.add(new_loc)
     db.commit()
-    db.refresh(new_location)
-    return new_location
+    db.refresh(new_loc)
 
-# 2. GET HISTORY (The "Trail")
-@router.get("/history", response_model=List[LocationResponse])
-def get_location_history(
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Returns all recorded locations for the logged-in user, 
-    sorted from most recent to oldest.
-    """
-    locations = db.query(UserLocation)\
-                  .filter(UserLocation.user_id == current_user.id)\
-                  .order_by(UserLocation.timestamp.desc())\
-                  .all()
-    return locations
+    # Check Geofences
+    safe_zones = db.query(SafeZone).filter(SafeZone.user_id == current_user.id).all()
+    for zone in safe_zones:
+        dist = calculate_distance(location.latitude, location.longitude, zone.latitude, zone.longitude)
+        if dist > zone.radius_meters:
+            print(f"ALERT: {current_user.username} is out of {zone.name} by {round(dist - zone.radius_meters)}m")
+    
+    return new_loc
+
+@router.post("/safe-zone", response_model=SafeZoneResponse)
+def create_safe_zone(zone: SafeZoneCreate, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    new_zone = SafeZone(**zone.model_dump(), user_id=current_user.id)
+    db.add(new_zone)
+    db.commit()
+    db.refresh(new_zone)
+    return new_zone
+
+@router.get("/safe-zones", response_model=List[SafeZoneResponse])
+def get_safe_zones(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    return db.query(SafeZone).filter(SafeZone.user_id == current_user.id).all()
