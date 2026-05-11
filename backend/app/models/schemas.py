@@ -2,10 +2,9 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
-# --- USER SCHEMAS ---
 class UserCreate(BaseModel):
     username: str
-    password: str = Field(..., max_length=72)  # Limits input to Bcrypt's max
+    password: str = Field(..., max_length=72)
 
 class UserResponse(BaseModel):
     id: int
@@ -13,7 +12,6 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- EMERGENCY CONTACT SCHEMAS ---
 class ContactCreate(BaseModel):
     name: str
     phone: str
@@ -26,7 +24,6 @@ class ContactResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- LOCATION SCHEMAS ---
 class LocationCreate(BaseModel):
     latitude: float
     longitude: float
@@ -40,7 +37,6 @@ class LocationResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- SAFE ZONE SCHEMAS ---
 class SafeZoneCreate(BaseModel):
     name: str
     latitude: float
@@ -57,7 +53,17 @@ class SafeZoneResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- ALERT SCHEMAS ---
+class TimerCreate(BaseModel):
+    duration_minutes: int
+
+class TimerResponse(BaseModel):
+    id: int
+    expires_at: datetime
+    is_active: bool
+    user_id: int
+    class Config:
+        from_attributes = True
+
 class PanicAlertResponse(BaseModel):
     message: str
     last_location: LocationResponse
