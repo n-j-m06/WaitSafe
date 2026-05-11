@@ -8,12 +8,12 @@ from typing import Optional
 from app.models.database import SessionLocal, User
 from app.models.schemas import UserCreate, UserResponse
 
-# --- SECURITY CONFIG ---
+
 SECRET_KEY = "your_super_secret_key_here"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# SWITCHED TO ARGON2: This removes the 72-byte limit and byte-mismatch issues
+
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -26,7 +26,7 @@ def get_db():
     finally:
         db.close()
 
-# --- NEW HASHING LOGIC ---
+
 def verify_password(plain_password, hashed_password):
     try:
         return pwd_context.verify(plain_password, hashed_password)
@@ -61,7 +61,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
-# --- ENDPOINTS ---
+
 
 @router.post("/signup", response_model=UserResponse)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
@@ -69,7 +69,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    # Argon2 will now handle the hashing
+   
     hashed_pw = get_password_hash(user.password)
     
     new_user = User(username=user.username, hashed_password=hashed_pw)
