@@ -1,33 +1,47 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, contacts, location, alerts
+from fastapi.responses import JSONResponse
+from app.api import auth, contacts, location, alerts, timers
 from app.models.database import init_db
 
-app = FastAPI(title="WaitSafe API - Personal Safety Engine")
+app = FastAPI(
+    title="WaitSafe API",
+    description="Backend for AI-Powered Women's Safety Analytics & Emergency Response",
+    version="1.0.0"
+)
 
-# Initialize database tables
+
 init_db()
 
-# --- CORS Configuration ---
-# This is essential for when we connect your React/Frontend later
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allows all origins for development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Route Registration ---
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"message": "An unexpected error occurred on the server.", "details": str(exc)},
+    )
+
+# Include all developed feature routers
 app.include_router(auth.router)
 app.include_router(contacts.router)
 app.include_router(location.router)
 app.include_router(alerts.router)
+app.include_router(timers.router)
 
 @app.get("/")
 def read_root():
     return {
-        "status": "online",
+        "status": "Online",
         "project": "WaitSafe",
-        "message": "Backend Security Engine is active and monitoring."
+        "developer": "Niranjan",
+        "location": "Chennai"
     }
