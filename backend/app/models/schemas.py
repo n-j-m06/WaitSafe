@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
+# --- USER SCHEMAS ---
 class UserCreate(BaseModel):
     username: str
     password: str = Field(..., max_length=72)
@@ -12,6 +13,7 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# --- EMERGENCY CONTACT SCHEMAS ---
 class ContactCreate(BaseModel):
     name: str
     phone: str
@@ -24,6 +26,7 @@ class ContactResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# --- LOCATION SCHEMAS ---
 class LocationCreate(BaseModel):
     latitude: float
     longitude: float
@@ -34,5 +37,13 @@ class LocationResponse(BaseModel):
     longitude: float
     timestamp: datetime
     user_id: int
+    class Config:
+        from_attributes = True
+
+# --- ALERT SCHEMAS ---
+class PanicAlertResponse(BaseModel):
+    message: str
+    last_location: LocationResponse
+    contacts_notified: List[ContactResponse]
     class Config:
         from_attributes = True
