@@ -1,17 +1,17 @@
 from fastapi import FastAPI
-# Removed "backend." from the start of the imports
+# Using absolute imports relative to the backend root
 from app.models.database import init_db
-from app.api import auth 
+from app.api import auth, contacts 
 
 app = FastAPI(title="WaitSafe API")
 
 @app.on_event("startup")
 def on_startup():
     init_db()
-    print("Database connected and tables created!")
+    print("WaitSafe Database Initialized!")
 
-# This tells FastAPI to include the signup routes
 app.include_router(auth.router)
+app.include_router(contacts.router)
 
 @app.get("/")
 def read_root():
