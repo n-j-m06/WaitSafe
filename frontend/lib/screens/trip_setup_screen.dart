@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'emergency_contacts_screen.dart';
 
 class TripSetupScreen extends StatefulWidget {
   const TripSetupScreen({super.key});
@@ -16,12 +17,16 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF05060A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF05060A),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : const Color(0xFF05060A),
+        ),
         title: const Text(
           "Trip Setup",
           style: TextStyle(
@@ -45,27 +50,31 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
 
                   const SizedBox(height: 20),
 
-                  const Text(
+                  Text(
                     "Prepare Your Safe Journey",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 38,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: isDark ? Colors.white : const Color(0xFF05060A),
                     ),
                   ),
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  Text(
                     "Set destination, timer, and emergency backup before you begin",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFFB8B8C5), fontSize: 17),
+                    style: TextStyle(
+                      color: isDark ? const Color(0xFFB8B8C5) : Colors.black54,
+                      fontSize: 17,
+                    ),
                   ),
 
                   const SizedBox(height: 35),
 
                   _buildField(
+                    context: context,
                     controller: destinationController,
                     hint: "Confirm Destination",
                     icon: Icons.location_on,
@@ -74,6 +83,7 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                   const SizedBox(height: 18),
 
                   _buildField(
+                    context: context,
                     controller: timerController,
                     hint: "Estimated Travel Time",
                     icon: Icons.timer,
@@ -82,6 +92,7 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                   const SizedBox(height: 18),
 
                   _buildField(
+                    context: context,
                     controller: contactController,
                     hint: "Emergency Contact",
                     icon: Icons.phone,
@@ -89,21 +100,37 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
 
                   const SizedBox(height: 28),
 
-                  SwitchListTile(
-                    value: liveTracking,
-                    onChanged: (value) {
-                      setState(() {
-                        liveTracking = value;
-                      });
-                    },
-                    activeColor: const Color(0xFFFF4FA3),
-                    title: const Text(
-                      "Enable Live Tracking",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0B0D14) : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0x22FF4FA3)),
                     ),
-                    subtitle: const Text(
-                      "Share your live route with trusted contacts",
-                      style: TextStyle(color: Color(0xFF9B9BA5)),
+                    child: SwitchListTile(
+                      value: liveTracking,
+                      onChanged: (value) {
+                        setState(() {
+                          liveTracking = value;
+                        });
+                      },
+                      activeColor: const Color(0xFFFF4FA3),
+                      title: Text(
+                        "Enable Live Tracking",
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF05060A),
+                          fontSize: 18,
+                        ),
+                      ),
+                      subtitle: Text(
+                        "Share your live route with trusted contacts",
+                        style: TextStyle(
+                          color: isDark
+                              ? const Color(0xFF9B9BA5)
+                              : Colors.black54,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -147,22 +174,11 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                             ),
                           );
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                "Journey Started Successfully",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              duration: const Duration(seconds: 2),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const EmergencyContactsScreen(),
                             ),
                           );
                         }
@@ -190,25 +206,28 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                   const SizedBox(height: 30),
 
                   Row(
-                    children: const [
+                    children: [
                       Expanded(
                         child: _MiniFeature(
                           icon: Icons.shield,
                           title: "Auto SOS",
+                          isDark: isDark,
                         ),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: _MiniFeature(
                           icon: Icons.people,
                           title: "Trusted Circle",
+                          isDark: isDark,
                         ),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: _MiniFeature(
                           icon: Icons.notifications,
                           title: "Instant Alert",
+                          isDark: isDark,
                         ),
                       ),
                     ],
@@ -223,19 +242,24 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
   }
 
   Widget _buildField({
+    required BuildContext context,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF05060A)),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9B9BA5)),
+        hintStyle: TextStyle(
+          color: isDark ? const Color(0xFF9B9BA5) : Colors.black45,
+        ),
         prefixIcon: Icon(icon, color: const Color(0xFFFF6FB8)),
         filled: true,
-        fillColor: const Color(0xFF0B0D14),
+        fillColor: isDark ? const Color(0xFF0B0D14) : Colors.white,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Color(0x33FF4FA3)),
@@ -252,15 +276,20 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
 class _MiniFeature extends StatelessWidget {
   final IconData icon;
   final String title;
+  final bool isDark;
 
-  const _MiniFeature({required this.icon, required this.title});
+  const _MiniFeature({
+    required this.icon,
+    required this.title,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B0D14),
+        color: isDark ? const Color(0xFF0B0D14) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0x22FF4FA3)),
       ),
@@ -270,8 +299,8 @@ class _MiniFeature extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF05060A),
               fontWeight: FontWeight.w600,
             ),
           ),

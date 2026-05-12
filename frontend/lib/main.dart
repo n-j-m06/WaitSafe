@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'screens/home_screen.dart';
+import 'theme/theme_provider.dart';
 
 void main() {
-  runApp(const WaitSafeApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const WaitSafeApp(),
+    ),
+  );
 }
 
 class WaitSafeApp extends StatelessWidget {
@@ -10,10 +18,12 @@ class WaitSafeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'WaitSafe',
-      theme: ThemeData(primarySwatch: Colors.deepPurple),
+      theme: themeProvider.currentTheme,
       home: const HomeScreen(),
     );
   }

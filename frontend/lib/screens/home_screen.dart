@@ -1,14 +1,17 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'trip_setup_screen.dart';
+import 'ghost_mode_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF05060A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -27,8 +30,10 @@ class HomeScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF4FA3).withOpacity(0.6),
-                              blurRadius: 25,
+                              color: const Color(
+                                0xFFFF4FA3,
+                              ).withOpacity(isDark ? 0.6 : 0.3),
+                              blurRadius: isDark ? 25 : 14,
                               spreadRadius: 3,
                             ),
                           ],
@@ -42,23 +47,40 @@ class HomeScreen extends StatelessWidget {
                           size: 42,
                         ),
                       ),
+
                       const SizedBox(width: 18),
+
                       ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Colors.white, Color(0xFFFF4FA3)],
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: isDark
+                              ? [Colors.white, const Color(0xFFFF4FA3)]
+                              : [
+                                  const Color(0xFFB0005A),
+                                  const Color(0xFFFF4FA3),
+                                ],
                         ).createShader(bounds),
-                        child: const Text(
-                          "WaitSafe",
-                          style: TextStyle(
-                            fontSize: 64,
-                            fontWeight: FontWeight.w700,
-                            fontStyle: FontStyle.italic,
-                            fontFamily: 'Georgia',
-                            color: Colors.white,
-                            letterSpacing: 1.8,
-                            shadows: [
-                              Shadow(color: Color(0xFFFF4FA3), blurRadius: 18),
-                            ],
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Text(
+                            "WaitSafe",
+                            overflow: TextOverflow.visible,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontSize: 64,
+                              fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.italic,
+                              fontFamily: 'Georgia',
+                              color: Colors.white,
+                              letterSpacing: 1.8,
+                              shadows: [
+                                Shadow(
+                                  color: isDark
+                                      ? const Color(0xFFFF4FA3)
+                                      : const Color(0x55FF4FA3),
+                                  blurRadius: isDark ? 18 : 8,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -71,17 +93,21 @@ class HomeScreen extends StatelessWidget {
                     height: 2,
                     width: 320,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         colors: [
                           Colors.transparent,
-                          Color(0xFFFF4FA3),
+                          isDark
+                              ? const Color(0xFFFF4FA3)
+                              : const Color(0xFFCC3D84),
                           Colors.transparent,
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF4FA3).withOpacity(0.5),
-                          blurRadius: 12,
+                          color: const Color(
+                            0xFFFF4FA3,
+                          ).withOpacity(isDark ? 0.5 : 0.2),
+                          blurRadius: isDark ? 12 : 6,
                         ),
                       ],
                     ),
@@ -89,10 +115,12 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 14),
 
-                  const Text(
+                  Text(
                     "STAY SAFE, STAY CONNECTED",
                     style: TextStyle(
-                      color: Color(0xFFFF6FB8),
+                      color: isDark
+                          ? const Color(0xFFFF6FB8)
+                          : const Color(0xFFCC3D84),
                       letterSpacing: 4,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -102,9 +130,12 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 28),
 
                   RichText(
-                    text: const TextSpan(
-                      style: TextStyle(fontSize: 20, color: Colors.white),
-                      children: [
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: isDark ? Colors.white : const Color(0xFF05060A),
+                      ),
+                      children: const [
                         TextSpan(text: "Your trusted "),
                         TextSpan(
                           text: "late-night",
@@ -124,29 +155,29 @@ class HomeScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(26),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0B0D14),
+                      color: isDark ? const Color(0xFF0B0D14) : Colors.white,
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(color: const Color(0x22FF4FA3)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withOpacity(isDark ? 0.5 : 0.12),
                           blurRadius: 20,
-                          spreadRadius: 4,
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
                     child: Column(
                       children: [
-                        // DESTINATION
                         _buildInputField(
+                          context: context,
                           hint: "Enter Destination",
                           icon: Icons.location_on,
                         ),
 
                         const SizedBox(height: 18),
 
-                        // TIMER
                         _buildInputField(
+                          context: context,
                           hint: "Set Timer (minutes)",
                           icon: Icons.access_time_filled,
                           suffix: Container(
@@ -205,9 +236,9 @@ class HomeScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(22),
                               ),
                             ),
-                            child: Row(
+                            child: const Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: const [
+                              children: [
                                 Icon(
                                   Icons.shield,
                                   color: Colors.white,
@@ -236,7 +267,14 @@ class HomeScreen extends StatelessWidget {
 
                         // GHOST MODE
                         OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const GhostModeScreen(),
+                              ),
+                            );
+                          },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(
                               color: Color(0xFFFF4FA3),
@@ -247,9 +285,9 @@ class HomeScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(22),
                             ),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
+                            children: [
                               Icon(
                                 Icons.grid_view_rounded,
                                 color: Color(0xFFFF6FB8),
@@ -279,28 +317,45 @@ class HomeScreen extends StatelessWidget {
 
                   // FEATURE BOXES
                   Row(
-                    children: const [
+                    children: [
                       Expanded(
                         child: FeatureCard(
                           icon: Icons.groups,
                           title: "Emergency Contacts",
                           subtitle: "Quick access to your saved contacts",
+                          isDark: isDark,
                         ),
                       ),
-                      SizedBox(width: 14),
+
+                      const SizedBox(width: 14),
+
                       Expanded(
-                        child: FeatureCard(
-                          icon: Icons.shield,
-                          title: "Real-time Protection",
-                          subtitle: "We've got your back 24/7",
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfileScreen(),
+                              ),
+                            );
+                          },
+                          child: FeatureCard(
+                            icon: Icons.shield,
+                            title: "Real-time Protection",
+                            subtitle: "We've got your back 24/7",
+                            isDark: isDark,
+                          ),
                         ),
                       ),
-                      SizedBox(width: 14),
+
+                      const SizedBox(width: 14),
+
                       Expanded(
                         child: FeatureCard(
                           icon: Icons.notifications_none,
                           title: "Instant Alerts",
                           subtitle: "Instantly notify when you need help",
+                          isDark: isDark,
                         ),
                       ),
                     ],
@@ -315,26 +370,37 @@ class HomeScreen extends StatelessWidget {
   }
 
   static Widget _buildInputField({
+    required BuildContext context,
     required String hint,
     required IconData icon,
     Widget? suffix,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextField(
-      style: const TextStyle(color: Colors.white, fontSize: 18),
+      style: TextStyle(
+        color: isDark ? Colors.white : const Color(0xFF05060A),
+        fontSize: 18,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF9B9BA5)),
+        hintStyle: TextStyle(
+          color: isDark ? const Color(0xFF9B9BA5) : Colors.black45,
+        ),
         prefixIcon: Container(
           margin: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0x33FF4FA3),
+            color: Color(0x33FF4FA3),
           ),
-          child: Icon(icon, color: Colors.white),
+          child: Icon(
+            icon,
+            color: isDark ? Colors.white : const Color(0xFF05060A),
+          ),
         ),
         suffixIcon: suffix,
         filled: true,
-        fillColor: const Color(0xFF090B12),
+        fillColor: isDark ? const Color(0xFF090B12) : Colors.white,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Color(0x44FF4FA3)),
@@ -352,12 +418,14 @@ class FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool isDark;
 
   const FeatureCard({
     super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.isDark,
   });
 
   @override
@@ -365,7 +433,7 @@ class FeatureCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B0D14),
+        color: isDark ? const Color(0xFF0B0D14) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0x22FF4FA3)),
       ),
@@ -376,20 +444,27 @@ class FeatureCard extends StatelessWidget {
             backgroundColor: const Color(0x22FF4FA3),
             child: Icon(icon, color: const Color(0xFFFF6FB8)),
           ),
+
           const SizedBox(height: 14),
+
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF05060A),
               fontWeight: FontWeight.bold,
             ),
           ),
+
           const SizedBox(height: 8),
+
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF9B9BA5), fontSize: 13),
+            style: TextStyle(
+              color: isDark ? const Color(0xFF9B9BA5) : Colors.black54,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
