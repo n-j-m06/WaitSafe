@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'theme/theme_provider.dart';
 
 void main() {
@@ -24,7 +24,7 @@ class WaitSafeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WaitSafe',
       theme: themeProvider.currentTheme,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }

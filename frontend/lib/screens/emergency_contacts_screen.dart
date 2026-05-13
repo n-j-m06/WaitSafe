@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 import 'setup_complete_screen.dart';
 
 class EmergencyContactsScreen extends StatefulWidget {
@@ -13,44 +15,120 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
-  final List<Map<String, String>> contacts = [];
+  List<Map<String, String>> contacts = [];
+  bool isLoading = false;
 
-  void addContact() {
+  @override
+  void initState() {
+    super.initState();
+    loadContacts();
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("token");
+  }
+
+  Future<void> loadContacts() async {
+    try {
+      final token = await getToken();
+
+      if (token == null) return;
+
+      final response = await ApiService.getContacts(token);
+
+      setState(() {
+        contacts = response.map<Map<String, String>>((contact) {
+          return {
+            "id": contact["id"].toString(),
+            "name": contact["name"].toString(),
+            "phone": contact["phone"].toString(),
+          };
+        }).toList();
+      });
+    } catch (e) {
+      showSnack("Failed to load contacts", Colors.redAccent);
+    }
+  }
+
+  Future<void> addContact() async {
     if (nameController.text.isEmpty || phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            "Please fill all contact details",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          backgroundColor: const Color(0xFFFF4FA3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      );
+      showSnack("Please fill all contact details", const Color(0xFFFF4FA3));
       return;
     }
 
     setState(() {
-      contacts.add({
-        "name": nameController.text,
-        "phone": phoneController.text,
-      });
+      isLoading = true;
     });
 
-    nameController.clear();
-    phoneController.clear();
+    try {
+      final token = await getToken();
 
+      if (token == null) {
+        showSnack("Login session expired", Colors.redAccent);
+        return;
+      }
+
+      final response = await ApiService.addContact(
+        token,
+        nameController.text.trim(),
+        phoneController.text.trim(),
+      );
+
+      if (response.containsKey("id") || response.containsKey("name")) {
+        nameController.clear();
+        phoneController.clear();
+
+        await loadContacts();
+
+        showSnack("Emergency Contact Added", Colors.green);
+      } else {
+        showSnack("Failed to add contact", Colors.redAccent);
+      }
+    } catch (e) {
+      showSnack("Server Error: $e", Colors.redAccent);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> deleteContact(int index) async {
+    try {
+      final token = await getToken();
+
+      if (token == null) {
+        showSnack("Login session expired", Colors.redAccent);
+        return;
+      }
+
+      final contactId = int.parse(contacts[index]["id"]!);
+
+      final response = await ApiService.deleteContact(token, contactId);
+
+      if (response["message"] != null) {
+        await loadContacts();
+        showSnack("Contact deleted successfully", Colors.green);
+      } else {
+        showSnack("Failed to delete contact", Colors.redAccent);
+      }
+    } catch (e) {
+      showSnack("Server Error: $e", Colors.redAccent);
+    }
+  }
+
+  void showSnack(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text(
-          "Emergency Contact Added",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -58,10 +136,11 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     );
   }
 
-  void deleteContact(int index) {
-    setState(() {
-      contacts.removeAt(index);
-    });
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -147,7 +226,6 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 
                   const SizedBox(height: 24),
 
-                  // ADD CONTACT BUTTON
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -157,13 +235,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF4FA3).withOpacity(0.4),
+                          color: const Color(0xFFFF4FA3).withValues(alpha: 0.4),
                           blurRadius: 18,
                         ),
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: addContact,
+                      onPressed: isLoading ? null : addContact,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
@@ -172,21 +250,22 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      child: const Text(
-                        "ADD CONTACT",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "ADD CONTACT",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
 
                   const SizedBox(height: 30),
 
-                  // CONTACT LIST
                   if (contacts.isNotEmpty)
                     Column(
                       children: contacts.asMap().entries.map((entry) {
@@ -220,7 +299,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      contact["name"]!,
+                                      contact["name"] ?? "",
                                       style: TextStyle(
                                         color: isDark
                                             ? Colors.white
@@ -231,7 +310,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      contact["phone"]!,
+                                      contact["phone"] ?? "",
                                       style: TextStyle(
                                         color: isDark
                                             ? const Color(0xFFB8B8C5)
@@ -257,7 +336,6 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 
                   const SizedBox(height: 24),
 
-                  // FINISH SETUP BUTTON
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -267,7 +345,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF4FA3).withOpacity(0.4),
+                          color: const Color(0xFFFF4FA3).withValues(alpha: 0.4),
                           blurRadius: 18,
                         ),
                       ],
@@ -275,22 +353,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (contacts.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                "Add at least one emergency contact",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: const Color(0xFFFF4FA3),
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
+                          showSnack(
+                            "Add at least one emergency contact",
+                            const Color(0xFFFF4FA3),
                           );
                         } else {
                           Navigator.push(

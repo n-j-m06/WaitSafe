@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'trip_setup_screen.dart';
 import 'ghost_mode_screen.dart';
 import 'profile_screen.dart';
+import 'emergency_contacts_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -319,11 +320,21 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: FeatureCard(
-                          icon: Icons.groups,
-                          title: "Emergency Contacts",
-                          subtitle: "Quick access to your saved contacts",
-                          isDark: isDark,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EmergencyContactsScreen(),
+                              ),
+                            );
+                          },
+                          child: FeatureCard(
+                            icon: Icons.groups,
+                            title: "Emergency Contacts",
+                            subtitle: "Quick access to your saved contacts",
+                            isDark: isDark,
+                          ),
                         ),
                       ),
 
