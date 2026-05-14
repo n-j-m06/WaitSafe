@@ -72,4 +72,30 @@ class ApiService {
 
     return jsonDecode(response.body);
   }
+
+  // TRIGGER PANIC ALERT
+  static Future<Map<String, dynamic>> triggerPanic(String token) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/alerts/panic'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    return jsonDecode(response.body);
+  }
+
+  // TRIGGER TIMER ALERT
+  static Future<Map<String, dynamic>> triggerTimerAlert(String token) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/alerts/trigger-timer-alert'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    return jsonDecode(response.body);
+  }
 }

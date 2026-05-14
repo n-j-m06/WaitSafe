@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'emergency_contacts_screen.dart';
+import 'active_trip_screen.dart';
 
 class TripSetupScreen extends StatefulWidget {
   const TripSetupScreen({super.key});
@@ -14,6 +14,59 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
   final TextEditingController contactController = TextEditingController();
 
   bool liveTracking = true;
+
+  void startJourney() {
+    final destination = destinationController.text.trim();
+    final timerText = timerController.text.trim();
+    final contact = contactController.text.trim();
+
+    if (destination.isEmpty || timerText.isEmpty || contact.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            "Please complete all trip details",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: const Color(0xFFFF4FA3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final int? minutes = int.tryParse(timerText);
+
+    if (minutes == null || minutes <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            "Enter valid travel time in minutes",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(20),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ActiveTripScreen(
+          destination: destination,
+          durationMinutes: minutes,
+          emergencyContact: contact,
+          liveTracking: liveTracking,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,10 +97,8 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
               constraints: const BoxConstraints(maxWidth: 700),
               padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Icon(Icons.route, size: 90, color: Color(0xFFFF4FA3)),
-
                   const SizedBox(height: 20),
 
                   Text(
@@ -85,8 +136,9 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                   _buildField(
                     context: context,
                     controller: timerController,
-                    hint: "Estimated Travel Time",
+                    hint: "Estimated Travel Time (minutes)",
                     icon: Icons.timer,
+                    keyboardType: TextInputType.number,
                   ),
 
                   const SizedBox(height: 18),
@@ -120,11 +172,10 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                           color: isDark
                               ? Colors.white
                               : const Color(0xFF05060A),
-                          fontSize: 18,
                         ),
                       ),
                       subtitle: Text(
-                        "Share your live route with trusted contacts",
+                        "Share your route with trusted contacts",
                         style: TextStyle(
                           color: isDark
                               ? const Color(0xFF9B9BA5)
@@ -143,53 +194,13 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFF4FA3), Color(0xFFFF85C8)],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF4FA3).withOpacity(0.4),
-                          blurRadius: 18,
-                        ),
-                      ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (destinationController.text.isEmpty ||
-                            timerController.text.isEmpty ||
-                            contactController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                "Please complete all trip details",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: const Color(0xFFFF4FA3),
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const EmergencyContactsScreen(),
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: startJourney,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 22),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
                       ),
                       child: const Text(
                         "START JOURNEY",
@@ -201,36 +212,6 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                         ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _MiniFeature(
-                          icon: Icons.shield,
-                          title: "Auto SOS",
-                          isDark: isDark,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _MiniFeature(
-                          icon: Icons.people,
-                          title: "Trusted Circle",
-                          isDark: isDark,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _MiniFeature(
-                          icon: Icons.notifications,
-                          title: "Instant Alert",
-                          isDark: isDark,
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -246,11 +227,13 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return TextField(
       controller: controller,
+      keyboardType: keyboardType,
       style: TextStyle(color: isDark ? Colors.white : const Color(0xFF05060A)),
       decoration: InputDecoration(
         hintText: hint,
@@ -268,43 +251,6 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Color(0xFFFF4FA3)),
         ),
-      ),
-    );
-  }
-}
-
-class _MiniFeature extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool isDark;
-
-  const _MiniFeature({
-    required this.icon,
-    required this.title,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B0D14) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x22FF4FA3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: const Color(0xFFFF6FB8), size: 28),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF05060A),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }
