@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class GhostModeScreen extends StatefulWidget {
@@ -8,342 +9,440 @@ class GhostModeScreen extends StatefulWidget {
 }
 
 class _GhostModeScreenState extends State<GhostModeScreen> {
-  final TextEditingController fakeDestinationController =
-      TextEditingController();
+  bool ghostModeEnabled = false;
+  bool stealthTracking = true;
+  int selectedMinutes = 15;
 
-  bool decoyCalls = true;
-  bool hiddenTracking = true;
-  bool panicMode = false;
+  Timer? ghostTimer;
+  int remainingSeconds = 0;
+
+  final List<int> timerOptions = [5, 10, 15, 20, 30, 45, 60];
+
+  void startGhostMode() {
+    ghostTimer?.cancel();
+
+    setState(() {
+      ghostModeEnabled = true;
+      remainingSeconds = selectedMinutes * 60;
+    });
+
+    ghostTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (remainingSeconds > 0) {
+        setState(() {
+          remainingSeconds--;
+        });
+      } else {
+        timer.cancel();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Ghost timer expired. Silent emergency protocol activated.",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(20),
+          ),
+        );
+
+        setState(() {
+          ghostModeEnabled = false;
+        });
+      }
+    });
+  }
+
+  void stopGhostMode() {
+    ghostTimer?.cancel();
+
+    setState(() {
+      ghostModeEnabled = false;
+      remainingSeconds = 0;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Ghost Mode safely disabled.",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(20),
+      ),
+    );
+  }
+
+  String get formattedTime {
+    final minutes = (remainingSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (remainingSeconds % 60).toString().padLeft(2, '0');
+    return "$minutes:$seconds";
+  }
+
+  @override
+  void dispose() {
+    ghostTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark
+          ? const Color(0xFF05060A)
+          : const Color(0xFFF8F9FD),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme: IconThemeData(
-          color: isDark ? Colors.white : const Color(0xFF05060A),
-        ),
         title: const Text(
           "Ghost Mode",
           style: TextStyle(
             color: Color(0xFFFF6FB8),
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 34,
           ),
         ),
         centerTitle: true,
+        backgroundColor: isDark
+            ? const Color(0xFF05060A)
+            : const Color(0xFFF8F9FD),
+        elevation: 0,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 760),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.visibility_off_rounded,
-                    size: 95,
-                    color: Color(0xFFFF4FA3),
-                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth > 1100;
 
-                  const SizedBox(height: 20),
+            if (!isDesktop) {
+              return _buildMobileLayout(context, isDark);
+            }
 
-                  Text(
-                    "Disappear. Divert. Defend.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF05060A),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    "Create decoy routes, hide your real movement,\nand activate stealth safety protocols.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isDark ? const Color(0xFFB8B8C5) : Colors.black54,
-                      fontSize: 17,
-                      height: 1.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 35),
-
-                  // FAKE DESTINATION
-                  _buildField(
-                    context: context,
-                    controller: fakeDestinationController,
-                    hint: "Set Fake Destination",
-                    icon: Icons.alt_route,
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // TOGGLES
-                  _buildToggleCard(
-                    context: context,
-                    title: "Decoy Calls",
-                    subtitle: "Simulate fake incoming safety calls",
-                    value: decoyCalls,
-                    onChanged: (value) {
-                      setState(() {
-                        decoyCalls = value;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _buildToggleCard(
-                    context: context,
-                    title: "Hidden Tracking",
-                    subtitle: "Share real route silently with trusted circle",
-                    value: hiddenTracking,
-                    onChanged: (value) {
-                      setState(() {
-                        hiddenTracking = value;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _buildToggleCard(
-                    context: context,
-                    title: "Panic Trigger",
-                    subtitle: "Emergency stealth SOS if danger detected",
-                    value: panicMode,
-                    onChanged: (value) {
-                      setState(() {
-                        panicMode = value;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // ACTIVATE BUTTON
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF4FA3), Color(0xFFFF85C8)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF4FA3).withOpacity(0.45),
-                          blurRadius: 20,
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (fakeDestinationController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                "Set a fake destination first",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: const Color(0xFFFF4FA3),
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                "Ghost Mode Activated",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                              margin: const EdgeInsets.all(20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(vertical: 22),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                      ),
-                      child: const Text(
-                        "ACTIVATE GHOST MODE",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // FEATURES
-                  Row(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1600),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _GhostFeature(
-                          icon: Icons.call,
-                          title: "Fake Call Shield",
-                          isDark: isDark,
-                        ),
+                        flex: 3,
+                        child: _buildMainPanel(context, isDark),
                       ),
-                      const SizedBox(width: 12),
+
+                      const SizedBox(width: 28),
+
                       Expanded(
-                        child: _GhostFeature(
-                          icon: Icons.location_off,
-                          title: "Route Masking",
-                          isDark: isDark,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _GhostFeature(
-                          icon: Icons.warning_amber,
-                          title: "Silent SOS",
-                          isDark: isDark,
+                        flex: 2,
+                        child: Column(
+                          children: [
+                            _buildStatusCard(
+                              icon: Icons.visibility_off,
+                              title: "Invisible Mode",
+                              subtitle: ghostModeEnabled
+                                  ? "Stealth protection is currently active."
+                                  : "Activate covert safety monitoring.",
+                              color: ghostModeEnabled
+                                  ? const Color(0xFFFF4FA3)
+                                  : Colors.grey,
+                            ),
+
+                            const SizedBox(height: 22),
+
+                            _buildStatusCard(
+                              icon: Icons.location_searching,
+                              title: "Silent Tracking",
+                              subtitle: stealthTracking
+                                  ? "Hidden route tracking is enabled."
+                                  : "Silent route tracking disabled.",
+                              color: stealthTracking
+                                  ? Colors.green
+                                  : Colors.grey,
+                            ),
+
+                            const SizedBox(height: 22),
+
+                            _buildStatusCard(
+                              icon: Icons.timer,
+                              title: "Auto SOS Backup",
+                              subtitle:
+                                  "If your stealth timer expires, emergency response silently activates.",
+                              color: Colors.orangeAccent,
+                            ),
+
+                            const SizedBox(height: 22),
+
+                            _buildStatusCard(
+                              icon: Icons.shield,
+                              title: "Trusted Contact Shield",
+                              subtitle:
+                                  "Emergency circle stays alert without exposing active mode.",
+                              color: const Color(0xFFB56CFF),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildField({
-    required BuildContext context,
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return TextField(
-      controller: controller,
-      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF05060A)),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: isDark ? const Color(0xFF9B9BA5) : Colors.black45,
-        ),
-        prefixIcon: const Icon(Icons.alt_route, color: Color(0xFFFF6FB8)),
-        filled: true,
-        fillColor: isDark ? const Color(0xFF0B0D14) : Colors.white,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0x33FF4FA3)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFFF4FA3)),
+  Widget _buildMobileLayout(BuildContext context, bool isDark) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 750),
+          padding: const EdgeInsets.all(24),
+          child: _buildMainPanel(context, isDark),
         ),
       ),
     );
   }
 
-  Widget _buildToggleCard({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _buildMainPanel(BuildContext context, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0B0D14) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x22FF4FA3)),
-      ),
-      child: SwitchListTile(
-        value: value,
-        onChanged: onChanged,
-        activeColor: const Color(0xFFFF4FA3),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF05060A),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: isDark ? const Color(0xFF9B9BA5) : Colors.black54,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GhostFeature extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool isDark;
-
-  const _GhostFeature({
-    required this.icon,
-    required this.title,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B0D14) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(color: const Color(0x22FF4FA3)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFFFF6FB8), size: 30),
-          const SizedBox(height: 10),
+          Icon(
+            ghostModeEnabled ? Icons.visibility_off : Icons.nightlight_round,
+            size: 100,
+            color: ghostModeEnabled
+                ? const Color(0xFFFF4FA3)
+                : const Color(0xFFB56CFF),
+          ),
+
+          const SizedBox(height: 25),
+
+          Text(
+            ghostModeEnabled ? "Ghost Mode Active" : "Stealth Protection",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 42,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Text(
+            ghostModeEnabled
+                ? "Invisible safety protocol running"
+                : "Move quietly. Stay protected.",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 22,
+              color: Color(0xFFFF6FB8),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 34),
+
+          Container(
+            padding: const EdgeInsets.all(34),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF05060A) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: ghostModeEnabled
+                    ? const Color(0xFFFF4FA3).withOpacity(0.4)
+                    : const Color(0xFFB56CFF).withOpacity(0.4),
+              ),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  ghostModeEnabled ? "Stealth Countdown" : "Set Ghost Timer",
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: ghostModeEnabled
+                        ? const Color(0xFFFF4FA3)
+                        : const Color(0xFFB56CFF),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                Text(
+                  ghostModeEnabled ? formattedTime : "$selectedMinutes min",
+                  style: TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: ghostModeEnabled
+                        ? const Color(0xFFFF4FA3)
+                        : const Color(0xFFB56CFF),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          if (!ghostModeEnabled)
+            DropdownButtonFormField<int>(
+              value: selectedMinutes,
+              dropdownColor: const Color(0xFF0B0D14),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFF05060A),
+                labelText: "Stealth Duration",
+                labelStyle: const TextStyle(color: Color(0xFFFF6FB8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              items: timerOptions.map((minutes) {
+                return DropdownMenuItem(
+                  value: minutes,
+                  child: Text(
+                    "$minutes minutes",
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedMinutes = value;
+                  });
+                }
+              },
+            ),
+
+          const SizedBox(height: 18),
+
+          SwitchListTile(
+            value: stealthTracking,
+            onChanged: (value) {
+              setState(() {
+                stealthTracking = value;
+              });
+            },
+            activeColor: const Color(0xFFFF4FA3),
+            title: const Text(
+              "Enable Silent Tracking",
+              style: TextStyle(color: Colors.white),
+            ),
+            subtitle: const Text(
+              "Hidden route visibility for emergency fallback",
+              style: TextStyle(color: Color(0xFFB8B8C5)),
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          if (!ghostModeEnabled)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: startGhostMode,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF4FA3),
+                  padding: const EdgeInsets.symmetric(vertical: 22),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  "ACTIVATE GHOST MODE",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
+          if (ghostModeEnabled)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: stopGhostMode,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 22),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  "END GHOST MODE",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 34, horizontal: 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B0D14),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0x22FF4FA3)),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 34,
+            backgroundColor: color.withOpacity(0.15),
+            child: Icon(icon, color: color, size: 34),
+          ),
+
+          const SizedBox(height: 20),
+
           Text(
             title,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF05060A),
-              fontWeight: FontWeight.w600,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              color: Color(0xFFB8B8C5),
+              height: 1.6,
             ),
           ),
         ],
