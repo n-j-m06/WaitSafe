@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
+import '../services/location_service.dart';
 
 class ActiveTripScreen extends StatefulWidget {
   final String destination;
@@ -22,14 +25,44 @@ class ActiveTripScreen extends StatefulWidget {
 class _ActiveTripScreenState extends State<ActiveTripScreen> {
   late int remainingSeconds;
   Timer? countdownTimer;
+
   bool tripCompleted = false;
   bool emergencyTriggered = false;
+
+  StreamSubscription<Position>? liveTrackingSubscription;
+  String liveCoordinates = "Tracking...";
 
   @override
   void initState() {
     super.initState();
     remainingSeconds = widget.durationMinutes * 60;
     startTimer();
+
+    if (widget.liveTracking) {
+      startLiveTracking();
+    }
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("token");
+  }
+
+  Future<void> startLiveTracking() async {
+    final token = await getToken();
+
+    if (token == null) return;
+
+    liveTrackingSubscription = LocationService.startLiveTracking(token, (
+      position,
+    ) {
+      if (!mounted) return;
+
+      setState(() {
+        liveCoordinates =
+            "${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}";
+      });
+    });
   }
 
   void startTimer() {
@@ -49,6 +82,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     if (tripCompleted || emergencyTriggered) return;
 
     countdownTimer?.cancel();
+    liveTrackingSubscription?.cancel();
 
     setState(() {
       emergencyTriggered = true;
@@ -74,6 +108,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
 
   void markSafe() {
     countdownTimer?.cancel();
+    liveTrackingSubscription?.cancel();
 
     setState(() {
       tripCompleted = true;
@@ -113,6 +148,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   @override
   void dispose() {
     countdownTimer?.cancel();
+    liveTrackingSubscription?.cancel();
     super.dispose();
   }
 
@@ -206,7 +242,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                               icon: Icons.location_history,
                               title: "Live Tracking",
                               subtitle: widget.liveTracking
-                                  ? "Your movement tracking is enabled."
+                                  ? liveCoordinates
                                   : "Tracking is disabled.",
                               color: widget.liveTracking
                                   ? Colors.green
@@ -329,7 +365,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
 
           _infoTile(
             icon: Icons.location_history,
-            title: widget.liveTracking ? "Enabled" : "Disabled",
+            title: widget.liveTracking ? liveCoordinates : "Disabled",
             subtitle: "Live Tracking",
             isDark: isDark,
           ),

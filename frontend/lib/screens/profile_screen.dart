@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'settings_screen.dart';
+import 'safe_zone_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -104,7 +105,7 @@ class ProfileScreen extends StatelessWidget {
                     gradient: const LinearGradient(
                       colors: [Color(0xFFFF4FA3), Color(0xFFFF85C8)],
                     ),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(color: Color(0x66FF4FA3), blurRadius: 18),
                     ],
                   ),
@@ -191,6 +192,7 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 32),
 
+          // EDIT PROFILE
           _buildActionButton(
             context: context,
             icon: Icons.edit,
@@ -215,6 +217,7 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // APP SETTINGS
           _buildActionButton(
             context: context,
             icon: Icons.settings,
@@ -229,6 +232,22 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // SAFE ZONE SETUP
+          _buildActionButton(
+            context: context,
+            icon: Icons.location_city,
+            title: "Safe Zone Setup",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SafeZoneScreen()),
+              );
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // LOGOUT
           _buildActionButton(
             context: context,
             icon: Icons.logout,
