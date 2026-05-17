@@ -11,20 +11,18 @@ class TripSetupScreen extends StatefulWidget {
 class _TripSetupScreenState extends State<TripSetupScreen> {
   final TextEditingController destinationController = TextEditingController();
   final TextEditingController timerController = TextEditingController();
-  final TextEditingController contactController = TextEditingController();
 
   bool liveTracking = true;
 
   void startJourney() {
     final destination = destinationController.text.trim();
     final timerText = timerController.text.trim();
-    final contact = contactController.text.trim();
 
-    if (destination.isEmpty || timerText.isEmpty || contact.isEmpty) {
+    if (destination.isEmpty || timerText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            "Please complete all trip details",
+            "Please complete destination and timer",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
           backgroundColor: const Color(0xFFFF4FA3),
@@ -61,7 +59,7 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
         builder: (context) => ActiveTripScreen(
           destination: destination,
           durationMinutes: minutes,
-          emergencyContact: contact,
+          emergencyContact: "All Saved Emergency Contacts",
           liveTracking: liveTracking,
         ),
       ),
@@ -72,7 +70,6 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
   void dispose() {
     destinationController.dispose();
     timerController.dispose();
-    contactController.dispose();
     super.dispose();
   }
 
@@ -112,15 +109,11 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // LEFT PANEL
                           Expanded(
                             flex: 3,
                             child: _buildJourneyForm(context, isDark),
                           ),
-
                           const SizedBox(width: 30),
-
-                          // RIGHT PANEL
                           Expanded(flex: 2, child: _buildSafetyPanel(isDark)),
                         ],
                       )
@@ -172,7 +165,7 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
           const SizedBox(height: 10),
 
           Text(
-            "Set destination, timer, and emergency backup before you begin",
+            "Set destination and timer before you begin. Your saved emergency contacts are automatically protected.",
             textAlign: TextAlign.center,
             style: TextStyle(
               color: isDark ? const Color(0xFFB8B8C5) : Colors.black54,
@@ -199,13 +192,32 @@ class _TripSetupScreenState extends State<TripSetupScreen> {
             keyboardType: TextInputType.number,
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
 
-          _buildField(
-            context: context,
-            controller: contactController,
-            hint: "Emergency Contact",
-            icon: Icons.phone,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF11131A) : const Color(0xFFF8F9FD),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0x22FF4FA3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.groups, color: Color(0xFFFF6FB8)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "All saved emergency contacts will receive alerts",
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF05060A),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 28),

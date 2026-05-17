@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lottie/lottie.dart';
 import '../services/api_service.dart';
 import 'home_screen.dart';
 
@@ -131,38 +132,79 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 500),
+              constraints: const BoxConstraints(maxWidth: 760),
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Icon(
-                    Icons.shield_moon,
-                    size: 90,
-                    color: Color(0xFFFF4FA3),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 220,
+                        width: 220,
+                        child: Lottie.asset(
+                          'assets/animations/girls_talking.json',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+
+                      const SizedBox(width: 18),
+
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFFFFFFFF),
+                                  Color(0xFFFF4FA3),
+                                  Color(0xFFFF85C8),
+                                ],
+                              ).createShader(bounds),
+                              child: const Text(
+                                "WaitSafe",
+                                overflow: TextOverflow.visible,
+                                style: TextStyle(
+                                  fontSize: 72,
+                                  fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 12,
+                                      color: Color(0xFFFF4FA3),
+                                    ),
+                                    Shadow(
+                                      blurRadius: 28,
+                                      color: Color(0x66FF4FA3),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            Text(
+                              isLogin
+                                  ? "Secure your journey. Login now."
+                                  : "Create your safety network account.",
+                              style: TextStyle(
+                                color: secondaryText,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(height: 20),
-
-                  Text(
-                    "WaitSafe",
-                    style: TextStyle(
-                      color: primaryText,
-                      fontSize: 42,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Text(
-                    isLogin
-                        ? "Secure your journey. Login now."
-                        : "Create your safety network account.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: secondaryText, fontSize: 17),
-                  ),
-
-                  const SizedBox(height: 35),
+                  const SizedBox(height: 42),
 
                   Container(
                     padding: const EdgeInsets.all(24),
@@ -173,8 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         BoxShadow(
                           color: const Color(
                             0xFFFF4FA3,
-                          ).withValues(alpha: isDark ? 0.18 : 0.08),
-                          blurRadius: 20,
+                          ).withValues(alpha: isDark ? 0.20 : 0.10),
+                          blurRadius: 26,
                         ),
                       ],
                       border: Border.all(color: const Color(0x22FF4FA3)),
@@ -228,8 +270,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               BoxShadow(
                                 color: const Color(
                                   0xFFFF4FA3,
-                                ).withValues(alpha: 0.35),
-                                blurRadius: 18,
+                                ).withValues(alpha: 0.40),
+                                blurRadius: 22,
                               ),
                             ],
                           ),

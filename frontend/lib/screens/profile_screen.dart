@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_screen.dart';
 import 'safe_zone_screen.dart';
+import 'edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String profileUsername = "Username";
+
+  @override
+  void initState() {
+    super.initState();
+    loadProfile();
+  }
+
+  Future<void> loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      profileUsername = prefs.getString("profile_username") ?? "Username";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +111,6 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // PROFILE HEADER
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
@@ -118,9 +140,9 @@ class ProfileScreen extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                const Text(
-                  "Ami User",
-                  style: TextStyle(
+                Text(
+                  profileUsername,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 34,
                     fontWeight: FontWeight.bold,
@@ -161,7 +183,6 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // STATS
           Row(
             children: const [
               Expanded(
@@ -192,32 +213,24 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // EDIT PROFILE
           _buildActionButton(
             context: context,
             icon: Icons.edit,
             title: "Edit Profile",
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
-                    "Edit Profile Coming Soon",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  backgroundColor: const Color(0xFFFF4FA3),
-                  behavior: SnackBarBehavior.floating,
-                  margin: const EdgeInsets.all(20),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditProfileScreen(),
                 ),
               );
+
+              loadProfile();
             },
           ),
 
           const SizedBox(height: 16),
 
-          // APP SETTINGS
           _buildActionButton(
             context: context,
             icon: Icons.settings,
@@ -232,7 +245,6 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // SAFE ZONE SETUP
           _buildActionButton(
             context: context,
             icon: Icons.location_city,
@@ -247,7 +259,6 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // LOGOUT
           _buildActionButton(
             context: context,
             icon: Icons.logout,
