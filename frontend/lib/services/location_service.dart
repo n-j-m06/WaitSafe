@@ -28,6 +28,21 @@ class LocationService {
     }
   }
 
+  // TRIGGER PANIC SOS
+  static Future<void> triggerPanic(String token) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/location/panic'),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to trigger panic SOS: ${response.body}");
+    }
+  }
+
   // CREATE SAFE ZONE
   static Future<Map<String, dynamic>> createSafeZone(
     String token,

@@ -78,7 +78,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     });
   }
 
-  void triggerEmergency({bool autoTriggered = false}) {
+  Future<void> triggerEmergency({bool autoTriggered = false}) async {
     if (tripCompleted || emergencyTriggered) return;
 
     countdownTimer?.cancel();
@@ -88,12 +88,22 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       emergencyTriggered = true;
     });
 
+    try {
+      final token = await getToken();
+
+      if (token != null) {
+        await LocationService.triggerPanic(token);
+      }
+    } catch (e) {
+      print("Emergency panic trigger failed: $e");
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           autoTriggered
-              ? "Timer expired. Emergency alert triggered."
-              : "Panic alert triggered successfully",
+              ? "Timer expired. Emergency SMS alert triggered."
+              : "Panic SOS activated. Emergency SMS sent.",
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -130,6 +140,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   String get formattedTime {
     final minutes = (remainingSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (remainingSeconds % 60).toString().padLeft(2, '0');
+
     return "$minutes:$seconds";
   }
 
@@ -197,9 +208,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                         flex: 3,
                         child: _buildMainPanel(context, isDark),
                       ),
-
                       const SizedBox(width: 28),
-
                       Expanded(
                         flex: 2,
                         child: Column(
@@ -210,9 +219,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                               subtitle: journeyStatus,
                               color: statusColor,
                             ),
-
                             const SizedBox(height: 22),
-
                             _buildStatusCard(
                               icon: Icons.groups,
                               title: "Trusted Circle",
@@ -220,9 +227,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                                   "Emergency contacts are connected and alert-ready.",
                               color: const Color(0xFFFF6FB8),
                             ),
-
                             const SizedBox(height: 22),
-
                             _buildStatusCard(
                               icon: Icons.timer,
                               title: "Auto SOS Protection",
@@ -235,9 +240,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                                   ? Colors.redAccent
                                   : Colors.orangeAccent,
                             ),
-
                             const SizedBox(height: 22),
-
                             _buildStatusCard(
                               icon: Icons.location_history,
                               title: "Live Tracking",
@@ -293,9 +296,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             size: 100,
             color: statusColor,
           ),
-
           const SizedBox(height: 25),
-
           Text(
             journeyStatus,
             textAlign: TextAlign.center,
@@ -305,9 +306,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               color: isDark ? Colors.white : Colors.black,
             ),
           ),
-
           const SizedBox(height: 14),
-
           Text(
             widget.destination,
             textAlign: TextAlign.center,
@@ -317,9 +316,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-
           const SizedBox(height: 34),
-
           Container(
             padding: const EdgeInsets.all(34),
             decoration: BoxDecoration(
@@ -337,9 +334,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       : "Remaining Time",
                   style: TextStyle(fontSize: 20, color: statusColor),
                 ),
-
                 const SizedBox(height: 14),
-
                 Text(
                   formattedTime,
                   style: TextStyle(
@@ -351,27 +346,21 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 30),
-
           _infoTile(
             icon: Icons.phone,
             title: widget.emergencyContact,
             subtitle: "Emergency Contact",
             isDark: isDark,
           ),
-
           const SizedBox(height: 16),
-
           _infoTile(
             icon: Icons.location_history,
             title: widget.liveTracking ? liveCoordinates : "Disabled",
             subtitle: "Live Tracking",
             isDark: isDark,
           ),
-
           const SizedBox(height: 30),
-
           if (!tripCompleted && !emergencyTriggered)
             SizedBox(
               width: double.infinity,
@@ -394,9 +383,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 ),
               ),
             ),
-
           if (!tripCompleted && !emergencyTriggered) const SizedBox(height: 18),
-
           if (!tripCompleted)
             SizedBox(
               width: double.infinity,
@@ -471,9 +458,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
             backgroundColor: color.withOpacity(0.15),
             child: Icon(icon, color: color, size: 34),
           ),
-
           const SizedBox(height: 20),
-
           Text(
             title,
             textAlign: TextAlign.center,
@@ -483,9 +468,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               color: Colors.white,
             ),
           ),
-
           const SizedBox(height: 12),
-
           Text(
             subtitle,
             textAlign: TextAlign.center,
