@@ -72,6 +72,8 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
   }
 
   Future<void> saveSafeZone() async {
+    print("SAVE BUTTON CLICKED");
+
     if (nameController.text.isEmpty ||
         latitudeController.text.isEmpty ||
         longitudeController.text.isEmpty ||
@@ -85,10 +87,18 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
     try {
       final token = await getToken();
 
+      print("TOKEN: $token");
+
       if (token == null) {
         showSnack("Login expired", Colors.redAccent);
         return;
       }
+
+      print("Sending Safe Zone:");
+      print("Name: ${nameController.text.trim()}");
+      print("Lat: ${latitudeController.text.trim()}");
+      print("Lng: ${longitudeController.text.trim()}");
+      print("Radius: ${radiusController.text.trim()}");
 
       final response = await LocationService.createSafeZone(
         token,
@@ -98,6 +108,8 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
         int.parse(radiusController.text.trim()),
       );
 
+      print("API RESPONSE: $response");
+
       showSnack("Safe Zone Created: ${response["name"]}", Colors.green);
 
       nameController.clear();
@@ -105,6 +117,7 @@ class _SafeZoneScreenState extends State<SafeZoneScreen> {
       longitudeController.clear();
       radiusController.clear();
     } catch (e) {
+      print("SAFE ZONE ERROR: $e");
       showSnack("Error: $e", Colors.redAccent);
     } finally {
       setState(() => isLoading = false);

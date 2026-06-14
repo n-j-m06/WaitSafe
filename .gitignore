@@ -10,3 +10,6 @@ dist/
 # Environment
 .env
 *.db
+
+*.mp4
+Demo_vdo.mp4
